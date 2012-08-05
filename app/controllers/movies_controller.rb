@@ -7,17 +7,16 @@ class MoviesController < ApplicationController
   end
 
   def index
-    
-    puts params[:ratings].class
+    @all_ratings = Movie.ratings
 
     if params[:ratings].nil?
-      @filter_ratings = []
+      @filter_ratings = session[:ratings].nil? ? [] : session[:ratings]
     else
-      @filter_ratings = params[:ratings]
-      @filter_ratings = @filter_ratings.keys if @filter_ratings.respond_to?(:keys)
+      @filter_ratings = params[:ratings].respond_to?(:keys) ? params[:ratings].keys : params[:ratings]
     end
+    session[:ratings] = @filter_ratings
 
-    sort_field = params[:s]
+    sort_field = params[:s].nil? ? session[:s] : params[:s]
     if sort_field == "t"
       @movies = Movie.find_all_by_rating(@filter_ratings, order: "title")
     elsif sort_field == "rd"
@@ -25,8 +24,14 @@ class MoviesController < ApplicationController
     else 
       @movies = Movie.find_all_by_rating(@filter_ratings)
     end
+    session[:s] = sort_field
 
-    @all_ratings = Movie.ratings
+    if session[:toggle]
+      session[:toggle] = false
+      redirect_to movies_path(ratings: session[:ratings], s: session[:s])
+    else
+      session[:toggle] = true
+    end
   end
 
   def new
